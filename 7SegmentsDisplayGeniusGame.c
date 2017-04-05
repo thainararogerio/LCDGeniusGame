@@ -1,14 +1,13 @@
-unsigned short mapaDigitos[11];
-unsigned short sequencia_num[100];
+unsigned short digitsMap[11];
+unsigned short num_sequence[100];
 unsigned short displays[4];
-unsigned short displayAtual = 0;
-unsigned short botao = 0;
-unsigned short tecla = 0;
-unsigned short pontuacao_record = 0;
+unsigned short currentDisplay = 0;
+unsigned short button = 0;
+unsigned short current_record = 0;
 
-unsigned int nivel_atual = 0;
-unsigned int semente = 0;
-unsigned int errou = 0;
+unsigned int current_level = 0;
+unsigned int seed = 0;
+unsigned int missed = 0;
 
 unsigned int S_A = 1;
 unsigned int S_B = 2;
@@ -26,14 +25,14 @@ unsigned int INT_1 = 5;
 unsigned int INT_2 = 3;
 unsigned int INT_TMR_2 = 1;
 
-void toca_som(unsigned int a,unsigned int b)
+void play_sound(unsigned int a,unsigned int b)
 {
     TMR0IE_BIT = 0;
     Sound_Play(a, b);
     TMR0IE_BIT = 1;
 }
 
-void limpa_display()
+void clean_display()
 {
     displays[0] = 255;
     displays[1] = 255;
@@ -48,14 +47,14 @@ void init_timer() {
     TMR0IE_BIT = 1;
 }
 
-void escreve_display(unsigned short d, unsigned short numero) {
+void write_display(unsigned short d, unsigned short numero) {
     PORTE = 0;
     PORTA.F5 = 0;
 
     if (numero == 255) {
        PORTD = 0x00;
     } else {
-       PORTD = mapaDigitos[numero];
+       PORTD = digitsMap[numero];
     }
 
     // Display1 = 001 = 1, display2 = 010 = 2, display3 = 100 = 4, display4 = 1
@@ -83,15 +82,15 @@ void interrupt()
                 TMR0L = 0x06;
         }
 
-    escreve_display(displayAtual+1, displays[displayAtual]);
-    displayAtual++;
+    write_display(currentDisplay+1, displays[currentDisplay]);
+    currentDisplay++;
 
-    if (displayAtual > 3)  {
-                displayAtual = 0;
+    if (currentDisplay > 3)  {
+		currentDisplay = 0;
     }
 }
 
-void popula_displays_num(unsigned int num) {
+void fill_num_display(unsigned int num) {
         displays[0] = 255;
         displays[1] = 255;
         displays[2] = 255;
@@ -108,7 +107,7 @@ void popula_displays_num(unsigned int num) {
     displays[3] = num % 10;
 }
 
-void popula_displays_palavra(char *palavra)
+void fill_word_display(char *palavra)
 {
     int i = 0;
     displays[0] = 255;
@@ -129,7 +128,7 @@ int cod_portb(){ return (PORTB & 0b00000111); }
 
 int cod_portc(){ return (PORTC & 0b00000001); }
 
-unsigned short le_carac()
+unsigned short read_carac()
 {
    if (COD_PORTB() == INT_0){ Delay_Ms(50);
    while (COD_PORTB() == INT_0); return('1'); }
@@ -143,141 +142,141 @@ unsigned short le_carac()
    return(255);
 }
 
-char le_botao()
+char read_button()
 {
-    char botao;
-    botao = le_carac();
+    char button;
+    button = read_carac();
 
-    while(botao == 255)
-        botao = le_carac();
+    while(button == 255)
+        button = read_carac();
 
-    return botao;
+    return button;
 }
 
-void preenche_mapa_digitos()
+void fill_digits_map()
 {
-    mapaDigitos[0] = S_A + S_B + S_C + S_D + S_E + S_F;
-    mapaDigitos[1] = S_B + S_C;
-    mapaDigitos[2] = S_A + S_B + S_D + S_E + S_G;
-    mapaDigitos[3] = S_A + S_B + S_C + S_D + S_G;
-    mapaDigitos[4] = S_B + S_C + S_F + S_G;
-    mapaDigitos[5] = S_A + S_C + S_D + S_F + S_G;
-    mapaDigitos[6] = S_A + S_C + S_D + S_E + S_F + S_G;
-    mapaDigitos[7] = S_A + S_B + S_C;
-    mapaDigitos[8] = S_A + S_B + S_C + S_D + S_E + S_F + S_G;
-    mapaDigitos[9] = S_A + S_B + S_C + S_F + S_G;
-    mapaDigitos['A'] = S_A + S_B + S_C + S_E + S_F + S_G;
-    mapaDigitos['B'] = S_C + S_D + S_E + S_F + S_G;
-    mapaDigitos['C'] = S_A + S_D + S_E + S_F;
-    mapaDigitos['D'] = S_B + S_C + S_D + S_E + S_G;
-    mapaDigitos['E'] = S_A + S_E + S_F + S_G + S_D;
-    mapaDigitos['F'] = S_A + S_E + S_F + S_G;
-    mapaDigitos['G'] = S_A + S_D + S_E + S_C + S_F + S_G;
-    mapaDigitos['H'] = S_B + S_C + S_E + S_F + S_G;
-    mapaDigitos['I'] = S_B + S_C;
-    mapaDigitos['L'] = S_D + S_E + S_F;
-    mapaDigitos['N'] = S_E + S_G + S_C;
-    mapaDigitos['O'] = S_A + S_B + S_C + S_D + S_E + S_F;
-    mapaDigitos['P'] = S_A + S_B + S_E + S_F + S_G;
-    mapaDigitos['R'] = S_E + S_G;
-    mapaDigitos['S'] = S_A + S_C + S_D + S_F + S_G;
-    mapaDigitos['T'] = S_B + S_C + S_G;
-    mapaDigitos['U'] = S_B + S_C + S_D + S_E + S_F;
-    mapaDigitos['V'] = S_B + S_C + S_D + S_E + S_F;
-    mapaDigitos['Y'] = S_B + S_C + S_D + S_F + S_G;
-    mapaDigitos['Z'] = S_A + S_B + S_D + S_E + S_G;
+    digitsMap[0] = S_A + S_B + S_C + S_D + S_E + S_F;
+    digitsMap[1] = S_B + S_C;
+    digitsMap[2] = S_A + S_B + S_D + S_E + S_G;
+    digitsMap[3] = S_A + S_B + S_C + S_D + S_G;
+    digitsMap[4] = S_B + S_C + S_F + S_G;
+    digitsMap[5] = S_A + S_C + S_D + S_F + S_G;
+    digitsMap[6] = S_A + S_C + S_D + S_E + S_F + S_G;
+    digitsMap[7] = S_A + S_B + S_C;
+    digitsMap[8] = S_A + S_B + S_C + S_D + S_E + S_F + S_G;
+    digitsMap[9] = S_A + S_B + S_C + S_F + S_G;
+    digitsMap['A'] = S_A + S_B + S_C + S_E + S_F + S_G;
+    digitsMap['B'] = S_C + S_D + S_E + S_F + S_G;
+    digitsMap['C'] = S_A + S_D + S_E + S_F;
+    digitsMap['D'] = S_B + S_C + S_D + S_E + S_G;
+    digitsMap['E'] = S_A + S_E + S_F + S_G + S_D;
+    digitsMap['F'] = S_A + S_E + S_F + S_G;
+    digitsMap['G'] = S_A + S_D + S_E + S_C + S_F + S_G;
+    digitsMap['H'] = S_B + S_C + S_E + S_F + S_G;
+    digitsMap['I'] = S_B + S_C;
+    digitsMap['L'] = S_D + S_E + S_F;
+    digitsMap['N'] = S_E + S_G + S_C;
+    digitsMap['O'] = S_A + S_B + S_C + S_D + S_E + S_F;
+    digitsMap['P'] = S_A + S_B + S_E + S_F + S_G;
+    digitsMap['R'] = S_E + S_G;
+    digitsMap['S'] = S_A + S_C + S_D + S_F + S_G;
+    digitsMap['T'] = S_B + S_C + S_G;
+    digitsMap['U'] = S_B + S_C + S_D + S_E + S_F;
+    digitsMap['V'] = S_B + S_C + S_D + S_E + S_F;
+    digitsMap['Y'] = S_B + S_C + S_D + S_F + S_G;
+    digitsMap['Z'] = S_A + S_B + S_D + S_E + S_G;
 }
 
-void imprime_sequencia_num()
+void print_num_sequence()
 {
    int i;
-   for (i = 0; i <= nivel_atual; ++i)
+   for (i = 0; i <= current_level; ++i)
    {
-      switch(sequencia_num[i])
+      switch(num_sequence[i])
       {
          case 0:
-           popula_displays_num(1111);
-           toca_som(466, 150);
+           fill_num_display(1111);
+           play_sound(466, 150);
            break;
          case 1:
-           popula_displays_num(2222);
-           toca_som(587, 150);
+           fill_num_display(2222);
+           play_sound(587, 150);
            break;
          case 2:
-           popula_displays_num(3333);
-           toca_som(698, 150);
+           fill_num_display(3333);
+           play_sound(698, 150);
            break;
          case 3:
-           popula_displays_num(4444);
-           toca_som(392, 150);
+           fill_num_display(4444);
+           play_sound(392, 150);
            break;
       }
       Delay_ms(300);
-      limpa_display();
+      clean_display();
       Delay_ms(300);
    }
 }
 
-int le_sequencia_jogador()
+int read_player_sequence()
 {
-   int i, acertou = 0;
+   int i, gotItRight = 0;
    char num;
 
-   for (i = 0; i <= nivel_atual; i++)
+   for (i = 0; i <= current_level; i++)
    {
-     num = le_botao();
+     num = read_button();
 
      switch(num)
      {
       case '1':
-           acertou = (sequencia_num[i] == 0);
-           if (acertou) { popula_displays_num(1111);toca_som(466, 150); }
+		   gotItRight = (num_sequence[i] == 0);
+           if (gotItRight) { fill_num_display(1111);play_sound(466, 150); }
            break;
       case '2':
-           acertou = (sequencia_num[i] == 1);
-           if (acertou) { popula_displays_num(2222);toca_som(587, 150); }
+		   gotItRight = (num_sequence[i] == 1);
+           if (gotItRight) { fill_num_display(2222);play_sound(587, 150); }
            break;
       case '3':
-           acertou = (sequencia_num[i] == 2);
-           if (acertou) { popula_displays_num(3333);toca_som(698, 150); }
+		   gotItRight = (num_sequence[i] == 2);
+           if (gotItRight) { fill_num_display(3333);play_sound(698, 150); }
            break;
       case '4':
-           acertou = (sequencia_num[i] == 3);
-           if (acertou) { popula_displays_num(4444);toca_som(392, 150); }
+		   gotItRight = (num_sequence[i] == 3);
+           if (gotItRight) { fill_num_display(4444);play_sound(392, 150); }
            break;
       case 255:
-           acertou = 0;
+		   gotItRight = 0;
            break;
      }
      Delay_ms(100);
-     limpa_display();
+     clean_display();
      Delay_ms(100);
 
-     if (!acertou)
+     if (!gotItRight)
         break;
   }
   
-  return acertou;
+  return gotItRight;
 }
 
-void escreve(unsigned short address, unsigned short dado)
+void write_(unsigned short address, unsigned short dado)
 {
  I2C1_Start();
- I2C1_Wr(0xA0); //endereco disp + escrever
+ I2C1_Wr(0xA0); //display address + writing action beginner
  I2C1_Wr(address);
  I2C1_Wr(dado);
  I2C1_Stop();
  Delay_ms(10);
 }
 
-unsigned short le(unsigned short address)
+unsigned short read_(unsigned short address)
 {
  unsigned short dado;
  I2C1_Start();
- I2C1_Wr(0xA0); //endereco disp + escrever
- I2C1_Wr(address); //aponta p/ endereco dado
+ I2C1_Wr(0xA0); //display address + writing action beginner
+ I2C1_Wr(address); //points to the given address
  I2C1_Repeated_Start();
- I2C1_Wr(0xA1); //endereco disp + ler
+ I2C1_Wr(0xA1); //display address + reading action beginner
  dado = I2C1_Rd(0u);//no acknowledge ?
  I2C1_Stop();
  return (dado);
@@ -298,90 +297,90 @@ int main()
     UART1_Init(19200);
     Delay_ms(100);
 
-    escreve(0,11);
+    write_(0,11);
 
-    init_timer();//começa a escutar as teclas
+    init_timer();//here we begin to receive the key events
 
     adcon1 = 0x0F;
 
-    preenche_mapa_digitos();
-    limpa_display();
+    fill_digits_map();
+    clean_display();
         
     Sound_Init(&PORTC, 2);//PORTC.F2
 
-    limpa_display();
-    popula_displays_palavra("CLIC");
-    carac = le_carac();
+    clean_display();
+    fill_word_display("CLIC");
+    carac = read_carac();
     while(carac == 255)
     {
-       semente++;
-       carac = le_carac();
+       seed++;
+       carac = read_carac();
     }
-    limpa_display();
+    clean_display();
 
     if (carac == '1')
     {
-       escreve(127, 0);
-       pontuacao_record = 0;
-       popula_displays_palavra("NO");
+       write_(127, 0);
+       current_record = 0;
+       fill_word_display("NO");
        Delay_ms(1000);
-       popula_displays_palavra("RECO");
+       fill_word_display("RECO");
        Delay_ms(1500);
     }
     else
     {
-       pontuacao_record = le(127);
-       popula_displays_palavra("RECO");
+       current_record = read_(127);
+       fill_word_display("RECO");
        Delay_ms(1000);
-       limpa_display();
+       clean_display();
        Delay_ms(500);
-       popula_displays_num(pontuacao_record);
+       fill_num_display(current_record);
        Delay_ms(1500);
     }
     
-    srand(semente);
-    limpa_display();
+    srand(seed);
+    clean_display();
     Delay_ms(500);
-    popula_displays_palavra("PLAY");
+    fill_word_display("PLAY");
     Delay_ms(1500);
        
-    while(!errou)
+    while(!missed)
     {
-       sequencia_num[nivel_atual] = rand() & 0b00000011;
-       imprime_sequencia_num();
-       errou = !le_sequencia_jogador();
+       num_sequence[current_level] = rand() & 0b00000011;
+       print_num_sequence();
+       missed = !read_player_sequence();
 
-       if (errou)
+       if (missed)
        {
-         limpa_display();
-         popula_displays_palavra("FAIL");
-         toca_som(300, 450);
-         toca_som(600, 450);
+         clean_display();
+         fill_word_display("FAIL");
+         play_sound(300, 450);
+         play_sound(600, 450);
          Delay_ms(2000);
          
-         popula_displays_palavra("SCOR");
+         fill_word_display("SCOR");
          Delay_ms(1500);
-         popula_displays_num(nivel_atual);
+         fill_num_display(current_level);
          Delay_ms(1500);
-         limpa_display();
+         clean_display();
          
-         if (nivel_atual > pontuacao_record)
+         if (current_level > current_record)
          {
-          escreve(127, nivel_atual);//novo record
-          popula_displays_palavra("UHUL");
+          write_(127, current_level);//new record
+          fill_word_display("UHUL");
           Delay_ms(1000);
-          popula_displays_palavra("NOVO");
+          fill_word_display("NOVO");//NOVO means NEW in Portuguese
           Delay_ms(1000);
-          popula_displays_palavra("RECO");
+          fill_word_display("RECO");
           Delay_ms(1000);
-          limpa_display();
+          clean_display();
          }
        }
        else
        {
-         nivel_atual++;
-         limpa_display();
-         popula_displays_palavra("GOOD");
+         current_level++;
+         clean_display();
+         fill_word_display("GOOD");
          Delay_ms(1000);
        }
     }
